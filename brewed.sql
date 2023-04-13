@@ -1,7 +1,7 @@
 CREATE TABLE `Products` (
     `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     `name` VARCHAR(50) NOT NULL,
-    `price` decimal(2) NOT NULL
+    `price` DECIMAL(5,2) NOT NULL
 );
 
 CREATE TABLE `Orders` (
