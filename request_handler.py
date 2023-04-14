@@ -2,15 +2,17 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 from views import get_all_orders, get_all_products, get_all_employees, get_single_employee, get_single_product, get_single_order
+from views import create_order, create_employee, create_product
+from views import update_order, update_employee, update_product
 
 method_mapper = {
-    "products":{
+    "products": {
         "single": get_single_product,
         "all": get_all_products
-        },
+    },
     "employees": {
         "single": get_single_employee,
-        "all":get_all_employees
+        "all": get_all_employees
     },
     "orders": {
         "single": get_single_order,
@@ -18,8 +20,10 @@ method_mapper = {
     }
 }
 
+
 class HandleRequests(BaseHTTPRequestHandler):
     """Handles the requests to this server"""
+
     def get_all_or_single(self, resource, id):
         if id is not None:
             response = method_mapper[resource]["single"](id)
@@ -34,6 +38,7 @@ class HandleRequests(BaseHTTPRequestHandler):
             response = method_mapper[resource]["all"]()
 
         return response
+
     def parse_url(self, path):
         """Parse the url into the resource and id"""
         parsed_url = urlparse(path)
@@ -81,8 +86,6 @@ class HandleRequests(BaseHTTPRequestHandler):
         (resource, id) = parsed
         response = self.get_all_or_single(resource, id)
         self.wfile.write(json.dumps(response).encode())
-        
-        
 
     def do_POST(self):
         """Make a post request to the server"""
@@ -91,9 +94,41 @@ class HandleRequests(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
         (resource, id) = self.parse_url(self.path)
-        
+        new_order = None
+        new_product = None
+        new_employee = None
+        if resource == "orders":
+            new_order = create_order(post_body)
+            self.wfile.write(json.dumps(new_order).encode())
+        if resource == "products":
+            new_product = create_product(post_body)
+            self.wfile.write(json.dumps(new_product).encode())
+        if resource == "employees":
+            new_employee = create_employee(post_body)
+            self.wfile.write(json.dumps(new_employee).encode())
+
     def do_PUT(self):
         """Handles PUT requests to the server"""
+        content_len = int(self.headers.get('content-length', 0))
+        post_body = self.rfile.read(content_len)
+        post_body = json.loads(post_body)
+
+        # Parse the URL
+        (resource, id) = self.parse_url(self.path)
+
+        success = False
+
+        if resource == "employees":
+            success = update_employee(id, post_body)
+        if resource == "orders":
+            success = update_order(id, post_body)
+        if resource == "products":
+            success = update_product(id, post_body)
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
+        self.wfile.write("".encode())
 
     def do_DELETE(self):
         """Handle DELETE Requests"""

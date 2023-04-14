@@ -37,3 +37,35 @@ def get_single_product(id):
     product = Product(data['id'], data['name'], data['price'])
 
     return product.__dict__
+def create_product(new_product):
+    with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        INSERT INTO Products
+            ( name, price)
+        VALUES 
+            ( ?, ?);
+        """, (new_product['name'], new_product['price']))
+
+        id = db_cursor.lastrowid
+        new_product['id'] = id
+    return new_product
+
+def update_product(id, product):
+     with sqlite3.connect("./db.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        UPDATE Products 
+            SET
+                name = ?,
+                price = ?
+        WHERE id = ?
+        """, (product['name'], product['price'], id))
+        rows_affected = db_cursor.rowcount
+
+        if rows_affected == 0:
+            return False
+        
+        return True
